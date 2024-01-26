@@ -1,0 +1,11 @@
+channels:
+  - bioconda
+  - daler
+  - conda-forge
+  - free
+  - defaults
+dependencies:
+  - hisat2
+  - python
+  - sambamba
+  - samtools

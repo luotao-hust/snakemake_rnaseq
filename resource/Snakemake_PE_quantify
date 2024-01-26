@@ -1,0 +1,116 @@
+configfile: "./config.yaml"
+SAMPLES = list(config["sample"].keys())
+total_threads = config["resources"]["threads"]
+fastq_dump_threads = 8 if total_threads > 8 else total_threads
+hisat2_threads = 8 if total_threads > 8 else total_threads
+fastp_threads = 8 if total_threads > 8 else total_threads
+featureCounts_threads = 8 if total_threads > 8 else total_threads
+fastqc_threads = 2 if total_threads > 3 else total_threads
+sambamba_threads = 4 if total_threads > 4 else total_threads
+samtools_threads = 4 if total_threads > 4 else total_threads
+
+rule all:
+    input:
+        expand("{sample}/{sample}_counts.txt", sample=SAMPLES),
+        expand("{sample}/{sample}_1_fastqc.zip", sample=SAMPLES)
+    retries: 3
+    shell:
+        """
+        multiqc {config[output_directory]} -o {config[output_directory]} --force
+        """
+
+rule fastq_dump:
+    input:
+        lambda wildcards: config["sample"][wildcards.sample]
+    output:
+        "{sample}/{sample}_1.fastq.gz",
+        "{sample}/{sample}_2.fastq.gz"
+    log:
+        "log/{sample}_fastq_dump.log"
+    threads: fastq_dump_threads
+    params:
+        config["output_directory"]+"/{sample}",
+    resources:
+        tmpdir=config["output_directory"]
+    shell:
+        """
+        parallel-fastq-dump --split-files --gzip --outdir {params[0]} --threads {threads} --sra-id {input} 2> {log}
+        """
+
+rule fastp:
+    input:
+        ancient("{sample}/{sample}_1.fastq.gz"),
+        ancient("{sample}/{sample}_2.fastq.gz")
+    output:
+        temp("{sample}/{sample}_1_good.fq.gz"),
+        temp("{sample}/{sample}_2_good.fq.gz"),
+        html="{sample}/{sample}.html",
+        json="{sample}/{sample}.json"
+    log:
+        "log/{sample}_fastp.log"
+    threads: fastp_threads
+    params:
+        lambda wildcards: config["fastp_para"][wildcards.sample]
+    resources:
+        tmpdir=config["output_directory"]
+    shell:
+        """
+        fastp -w {threads} -h {output[html]} -j {output[json]} -i {input[0]} -I {input[1]} -o {output[0]} -O {output[1]} {params[0]} 2> {log}
+        """
+
+rule HISAT2:
+    input:
+        "{sample}/{sample}_1_good.fq.gz",
+        "{sample}/{sample}_2_good.fq.gz"
+    output:
+        "{sample}/{sample}.bam",
+        "{sample}/{sample}.bam.bai"
+    params:
+        "{sample}/{sample}.bam",
+        "{sample}",
+        "{sample}/{sample}-splicesites.tab",
+        "{sample}/{sample}-splicesites.bed"
+    log:
+        "log/{sample}_HISAT2.log"
+    threads: hisat2_threads
+    resources:
+        tmpdir=config["output_directory"]
+    shell:
+        """
+        hisat2 --rg-id hisat2 -p {threads} --rg SM:{params[1]} --rg PL:illumina --rg LB:library  --rg GPU:unit1 --rg GSM:{params[1]} -x {config[resources][hisat2_index]} --known-splicesite-infile {config[resources][known_splicesite]} --novel-splicesite-outfile {params[2]} -1 {input[0]} -2 {input[1]} --no-mixed --no-discordant | sambamba view -t {sambamba_threads} --sam-input --format=bam /dev/stdin | samtools sort -@ {samtools_threads} > {params[0]} && samtools index -@ {samtools_threads} {params[0]} && python hisat2_jun2bed.py {params[2]} {params[3]} 2> {log}
+        """
+
+rule featureCounts:
+    input:
+        "{sample}/{sample}.bam"
+    output:
+        "{sample}/{sample}_counts.txt"
+    log:
+        "log/{sample}_featurecounts.log"
+    threads: featureCounts_threads
+    resources:
+        tmpdir=config["output_directory"]
+    shell:
+        """
+        featureCounts -a {config[resources][gtf]} -o {output[0]} -T {threads} -p --countReadPairs -t exon -g gene_id {input[0]} && python ./count_to_tpm.py -f {output[0]} 2> {log}
+        """
+
+rule fastqc:
+    input:
+        ancient("{sample}/{sample}_1.fastq.gz"),
+        ancient("{sample}/{sample}_2.fastq.gz")
+    output:
+        "{sample}/{sample}_1_fastqc.zip",
+        "{sample}/{sample}_2_fastqc.zip",
+        "{sample}/{sample}_1_fastqc.html",
+        "{sample}/{sample}_2_fastqc.html"
+    log:
+        "log/{sample}_fastqc.log"
+    threads: fastqc_threads
+    resources:
+        tmpdir=config["output_directory"]
+    priority: 1
+    shell:
+        """
+        fastqc -o {wildcards.sample} -t {threads} {input[0]} {input[1]} 2> {log}
+        """

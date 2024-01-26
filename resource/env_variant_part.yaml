@@ -1,0 +1,11 @@
+channels:
+  - bioconda
+  - conda-forge
+  - free
+  - defaults
+dependencies:
+  - openjdk=17.0.3
+  - pandas=1.1.5
+  - python=3
+  - sambamba=1.0
+  - samtools=1.3.1

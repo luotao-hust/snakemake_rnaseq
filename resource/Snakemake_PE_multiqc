@@ -1,0 +1,51 @@
+configfile: "./config.yaml"
+SAMPLES = list(config["sample"].keys())
+total_threads = config["resources"]["threads"]
+fastqc_threads = 2 if total_threads > 3 else total_threads
+rule all:
+    input:
+        expand("log/{sample}_fastqc.log", sample=SAMPLES),
+        expand("{sample}/{sample}_2_fastqc.zip", sample=SAMPLES)
+    retries: 3
+    shell:
+        """
+        multiqc {config[output_directory]}  -o {config[output_directory]} --force
+        """
+
+rule fastq_dump:
+    input:
+        lambda wildcards: config["sample"][wildcards.sample]
+    output:
+        "{sample}/{sample}_1.fastq.gz",
+        "{sample}/{sample}_2.fastq.gz"
+    log:
+        "log/{sample}_fastq_dump.log"
+    threads: total_threads
+    params:
+        config["output_directory"]+"/{sample}",
+    resources:
+        tmpdir=config["output_directory"]
+    shell:
+        """
+        parallel-fastq-dump --split-files --gzip --outdir {params[0]} --threads {threads} --sra-id {input} 2> {log}
+        """
+
+rule fastqc:
+    input:
+        ancient("{sample}/{sample}_1.fastq.gz"),
+        ancient("{sample}/{sample}_2.fastq.gz")
+    output:
+        "{sample}/{sample}_1_fastqc.zip",
+        "{sample}/{sample}_2_fastqc.zip",
+        "{sample}/{sample}_1_fastqc.html",
+        "{sample}/{sample}_2_fastqc.html"
+    log:
+        "log/{sample}_fastqc.log"
+    threads: fastqc_threads
+    resources:
+        tmpdir=config["output_directory"]
+    priority: 1
+    shell:
+        """
+        fastqc -o {wildcards.sample} -t {threads} {input[0]} {input[1]} 2> {log}
+        """
