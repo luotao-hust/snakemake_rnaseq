@@ -1,6 +1,7 @@
 # RNA-seq分析流程
 
 **更新内容**
+
 2024-03-01: snakemake >=8.0 时，slurm 的运行方式发生改变。
 
 2024-01-26: 添加了countReadPairs 参数
