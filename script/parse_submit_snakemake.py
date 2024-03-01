@@ -20,7 +20,7 @@ if __name__ == "__main__":
     parser.add_argument('-f', '--fastp_file',nargs='?', type=str, help='fastp_file', action="store")
     parser.add_argument('-m', '--model', type=str,nargs='?', help='paired-end:PE, single-end:SE', action="store", default="PE",choices=["PE","SE"])
     parser.add_argument('-v', '--vcf',nargs='?', type=str, help='vcf file', action="store")
-    parser.add_argument('-l', '--lsf',nargs='?', type=str, help='wether to sub to lsf cluster',default="T",choices=["T","F"], action="store")
+    parser.add_argument('-l', '--lsf',nargs='?', type=str, help='wether to sub to lsf cluster',default="F",choices=["T","F"], action="store")
     parser.add_argument('--slurm',nargs='?', type=str, help='wether to sub to Slrum cluster',default="F",choices=["T","F"], action="store")
     parser.add_argument('--slurm_partition',nargs='?', type=str, help='slurm partition',default="cn", action="store")
 
