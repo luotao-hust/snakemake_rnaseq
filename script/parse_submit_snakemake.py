@@ -174,7 +174,7 @@ if __name__ == "__main__":
     shutil.copy(os.path.join(current_path,"../resource","hisat2_jun2bed.py"), output_directory)
     shutil.copy(os.path.join(current_path,"../resource","count_to_tpm.py"), output_directory)
     
-    run_commd = "cd {output_directory} && snakemake {sub2cluster} -s {snakefile} --resources mem_mb=50000 --cores {cores} --jobs {jobs} --configfile={config} -k -r {dry} ".format(
+    run_commd = "cd {output_directory} && snakemake {sub2cluster} -s {snakefile} --resources mem_mb=50000 --cores {cores} --jobs {jobs} --configfile={config} -k {dry} ".format(
             output_directory = output_directory,
             sub2cluster = sub2cluster,
             snakefile = os.path.join(output_directory,os.path.split(snakefile)[1]),
