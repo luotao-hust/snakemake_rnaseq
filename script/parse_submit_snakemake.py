@@ -21,6 +21,9 @@ if __name__ == "__main__":
     parser.add_argument('-m', '--model', type=str,nargs='?', help='paired-end:PE, single-end:SE', action="store", default="PE",choices=["PE","SE"])
     parser.add_argument('-v', '--vcf',nargs='?', type=str, help='vcf file', action="store")
     parser.add_argument('-l', '--lsf',nargs='?', type=str, help='wether to sub to lsf cluster',default="T",choices=["T","F"], action="store")
+    parser.add_argument('--slurm',nargs='?', type=str, help='wether to sub to Slrum cluster',default="F",choices=["T","F"], action="store")
+    parser.add_argument('--slurm_partition',nargs='?', type=str, help='slurm partition',default="cn", action="store")
+
     args = parser.parse_args()
     if args.cores < 2:
          Exception("The number of cores must be than 2!")
@@ -109,15 +112,21 @@ if __name__ == "__main__":
         for index,row in samples.iterrows():
             config["fastp_para"][row[0].strip()] = " "
 
+    # wether submit to cluster
     if args.dry_run != "F":
         dry="-np"
         sub2cluster = " "
-    elif args.dry_run == "F" and args.lsf == "F":
-        sub2cluster = " "
+    elif args.dry_run == "F" and args.lsf == "T":
         dry=""
+        sub2cluster = " --profile lsf "
+        shutil.copy(os.path.join(current_path,"../resource","lsf.yaml"), output_directory)
+    elif args.dry_run == "F" and args.slurm == "T":
+        dry=""
+        sub2cluster=" --slurm --default-resources slurm_partition=" + args.slurm_partition
     else:
         dry=""
-        sub2cluster="--profile lsf"
+        sub2cluster = " "
+        
     job_div = 8 if args.type == "quantify" else 11
     rm_flag = {}
     rm_flag_sra = False
