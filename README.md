@@ -1,6 +1,7 @@
 # RNA-seq分析流程
 
 **更新内容**
+2024-03-01: snakemake >=8.0 时，slurm 的运行方式发生改变。
 
 2024-01-26: 添加了countReadPairs 参数
 
@@ -74,28 +75,8 @@ mamba create -n RNApipline_env fastp=0.23.4 fastqc=0.12.1 openjdk=20.0.0 pandas=
 # 启动环境，后续的运行必须在这个环境中
 mamba activate RNApipline_env
 # 继续安装软件
-pip install multiqc snakemake
+pip install multiqc snakemake snakemake-executor-plugin-slurm
 
-```
-
-2.5 在LSF集群中使用（可选）
-
-在LSF集群中使用时，需要额外进行配置
-
-详细内容参见  https://github.com/Snakemake-Profiles/lsf 主要配置文件的生成和内存单位的标定
-
-```bash
-# 确定内存单位，并且记住这个单位（KB, MB, GB, TB, PB, EB, ZB）
-grep '^LSF_UNIT_FOR_LIMITS' ${LSF_ENVDIR}/lsf.conf
-# LSF_UNIT_FOR_LIMITS=MB  单位为：：：：：MB  记住这个单位
-# 安装相关的依赖 确保
-pip install cookiecutter
-# 创建配置文件
-profile_dir="${HOME}/.config/snakemake"
-mkdir -p "$profile_dir"
-template="gh:Snakemake-Profiles/lsf"
-cookiecutter --output-dir "$profile_dir" "$template"
-# 系统将提示设置一些参数，默认即可
 ```
 
 ## 3. 运行脚本的下载

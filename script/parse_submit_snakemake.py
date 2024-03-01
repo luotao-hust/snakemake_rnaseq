@@ -122,7 +122,7 @@ if __name__ == "__main__":
         shutil.copy(os.path.join(current_path,"../resource","lsf.yaml"), output_directory)
     elif args.dry_run == "F" and args.slurm == "T":
         dry=""
-        sub2cluster=" --slurm --default-resources slurm_partition=" + args.slurm_partition
+        sub2cluster=" --executor slurm --default-resources slurm_partition=" + args.slurm_partition
     else:
         dry=""
         sub2cluster = " "
