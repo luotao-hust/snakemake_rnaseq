@@ -76,7 +76,7 @@ mamba create -n RNApipline_env fastp=0.23.4 fastqc=0.12.1 openjdk=20.0.0 pandas=
 # 启动环境，后续的运行必须在这个环境中
 mamba activate RNApipline_env
 # 继续安装软件
-pip install multiqc snakemake snakemake-executor-plugin-slurm
+pip install multiqc snakemake==8.5.3 snakemake-executor-plugin-slurm==0.4.1
 
 ```
 
