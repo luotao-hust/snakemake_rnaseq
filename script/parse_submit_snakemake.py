@@ -153,9 +153,9 @@ if __name__ == "__main__":
         if samples.shape[1] == 2:
             for index,row in samples.iterrows():
                 config["sample"][row[0].strip()] = row[1].strip()
-                if re.search(r"sra",row[1].strip()):
+                if row[1].strip().endswith(".sra"):
                     rm_flag_sra = True
-                if not os.path.isfile( os.path.join(output_directory,row[0].strip(),row[0].strip()+".fastq.gz")) and not re.search(r"sra",row[1].strip()):
+                if not os.path.isfile( os.path.join(output_directory,row[0].strip(),row[0].strip()+".fastq.gz")) and not row[1].strip().endswith(".sra"):
                     rm_flag[row[0].strip()] = True
                     os.makedirs(os.path.join(output_directory,row[0].strip()), exist_ok=True)
                     os.system("ln -s {source_file} {target_file}".format(source_file = row[1].strip(),
